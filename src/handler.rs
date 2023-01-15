@@ -4,7 +4,6 @@ use crate::{
     response::{GenericResponse, SingleTodoResponse, TodoData, TodoListResponse},
 };
 use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
-use actix_web::http::StatusCode;
 use chrono::prelude::*;
 use crate::status::{ActionStatus, ToResponse};
 
