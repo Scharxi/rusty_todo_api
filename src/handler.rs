@@ -77,7 +77,7 @@ async fn create_todo_handler(
 }
 
 #[get("/todos/{id}")]
-async fn get_todo_by_id(
+async fn get_todo_handler(
     path: web::Path<String>,
     data: web::Data<AppState>,
 ) -> impl Responder {
