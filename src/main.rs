@@ -2,8 +2,11 @@ mod model;
 mod response;
 mod handler;
 
-use actix_web::{App, get, HttpResponse, HttpServer, Responder};
+use actix_cors::Cors;
+use actix_web::{App, get, HttpResponse, HttpServer, Responder, web};
+use actix_web::http::header;
 use actix_web::middleware::Logger;
+use crate::model::AppState;
 
 
 #[actix_web::main]
@@ -13,11 +16,26 @@ async fn main() -> std::io::Result<()> {
     }
     env_logger::init();
 
+    let todo_db = AppState::init();
+    let app_data = web::Data::new(todo_db);
+
     println!("🚀 Server started successfully");
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("http://localhost:3000")
+            .allowed_origin("http://localhost:3000/")
+            .allowed_methods(vec!["GET", "POST"])
+            .allowed_headers(vec![
+                header::CONTENT_TYPE,
+                header::AUTHORIZATION,
+                header::ACCEPT,
+            ])
+            .supports_credentials();
         App::new()
-            .service(handler::health_checker_handler)
+            .app_data(app_data.clone())
+            .configure(handler::config)
+            .wrap(cors)
             .wrap(Logger::default())
     })
         .bind(("127.0.0.1", 8000))?
