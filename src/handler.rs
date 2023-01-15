@@ -159,3 +159,24 @@ async fn edit_todo_handler(
     HttpResponse::Ok().json(json_response)
 }
 
+#[delete("todos/{id}")]
+async fn delete_todo_handler(
+    path: web::Path<String>,
+    data: web::Data<AppState>
+) -> impl Responder {
+    let mut vec = data.todo_db.lock().unwrap();
+
+    let id = path.into_inner();
+    let todo = vec.iter_mut().find(|todo| todo.id == Some(id.to_owned()));
+
+    if todo.is_none() {
+        let error_response = GenericResponse {
+            status: "fail".to_owned(),
+            message: format!("Todo with id '{id}' not found.")
+        };
+        return HttpResponse::NotFound().json(error_response);
+    }
+
+    vec.retain(|todo| todo.id != Some(id.to_owned()));
+    HttpResponse::NoContent().finish()
+}
