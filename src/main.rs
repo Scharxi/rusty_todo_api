@@ -1,6 +1,7 @@
 mod model;
 mod response;
 mod handler;
+mod status;
 
 use actix_cors::Cors;
 use actix_web::{App, get, HttpResponse, HttpServer, Responder, web};

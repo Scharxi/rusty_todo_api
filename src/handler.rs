@@ -4,7 +4,9 @@ use crate::{
     response::{GenericResponse, SingleTodoResponse, TodoData, TodoListResponse},
 };
 use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
+use actix_web::http::StatusCode;
 use chrono::prelude::*;
+use crate::status::{ActionStatus, ToResponse};
 
 
 #[get("api/healthcheck")]
@@ -50,10 +52,8 @@ async fn create_todo_handler(
     let todo = vec.iter().find(|todo| todo.title == body.title);
 
     if todo.is_some() {
-        let error_response = GenericResponse {
-            status: "fail".to_string(),
-            message: format!("Todo with title `{}` already exists.", body.title),
-        };
+        let error_response = ActionStatus::Failure.to_response(
+            format!("Todo with title `{}` already exists.", body.title));
 
         return HttpResponse::Conflict().json(error_response);
     }
@@ -88,10 +88,7 @@ async fn get_todo_handler(
     let todo = vec.iter().find(|todo| todo.id == Some(id.to_owned()));
 
     if todo.is_none() {
-        let error_response = GenericResponse {
-            status: "fail".to_string(),
-            message: format!("Todo with id `{id}` doesn't exists."),
-        };
+        let error_response = ActionStatus::Failure.to_response(format!("Todo with id `{id}` doesn't exists."));
         return HttpResponse::NotFound().json(error_response);
     }
 
@@ -108,7 +105,7 @@ async fn get_todo_handler(
 async fn edit_todo_handler(
     path: web::Path<String>,
     body: web::Json<UpdateTodoSchema>,
-    data: web::Data<AppState>
+    data: web::Data<AppState>,
 ) -> impl Responder {
     let mut vec = data.todo_db.lock().unwrap();
 
@@ -116,10 +113,8 @@ async fn edit_todo_handler(
     let todo = vec.iter().find(|todo| todo.id == Some(id.to_owned()));
 
     if todo.is_none() {
-        let error_response = GenericResponse {
-            status: "fail".to_owned(),
-            message: format!("Todo with id '{id}' not found.")
-        };
+        let error_response = ActionStatus::Failure.to_response(
+            format!("Todo with id '{id}' not found."));
         return HttpResponse::NotFound().json(error_response);
     }
 
@@ -146,7 +141,7 @@ async fn edit_todo_handler(
             todo.completed
         },
         createdAt: todo.createdAt,
-        updatedAt: Some(datetime)
+        updatedAt: Some(datetime),
     };
 
     todo = payload;
@@ -162,7 +157,7 @@ async fn edit_todo_handler(
 #[delete("todos/{id}")]
 async fn delete_todo_handler(
     path: web::Path<String>,
-    data: web::Data<AppState>
+    data: web::Data<AppState>,
 ) -> impl Responder {
     let mut vec = data.todo_db.lock().unwrap();
 
@@ -170,10 +165,8 @@ async fn delete_todo_handler(
     let todo = vec.iter_mut().find(|todo| todo.id == Some(id.to_owned()));
 
     if todo.is_none() {
-        let error_response = GenericResponse {
-            status: "fail".to_owned(),
-            message: format!("Todo with id '{id}' not found.")
-        };
+        let error_response = ActionStatus::Failure.to_response(
+            format!("Todo with id '{id}' not found."));
         return HttpResponse::NotFound().json(error_response);
     }
 
