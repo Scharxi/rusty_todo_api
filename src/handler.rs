@@ -3,9 +3,7 @@ use crate::{
     response::{GenericResponse, SingleTodoResponse, TodoData, TodoListResponse},
 };
 use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
-use actix_web::dev::Response;
 use chrono::prelude::*;
-use uuid::Uuid;
 
 
 #[get("api/healthcheck")]
@@ -81,7 +79,7 @@ async fn create_todo_handler(
 #[get("/todos/{id}")]
 async fn get_todo_by_id(
     path: web::Path<String>,
-    data: web::Data<AppState>
+    data: web::Data<AppState>,
 ) -> impl Responder {
     let vec = data.todo_db.lock().unwrap();
 
@@ -91,7 +89,7 @@ async fn get_todo_by_id(
     if todo.is_none() {
         let error_response = GenericResponse {
             status: "fail".to_string(),
-            message: format!("Todo with id `{id}` doesn't exists.")
+            message: format!("Todo with id `{id}` doesn't exists."),
         };
         return HttpResponse::NotFound().json(error_response);
     }
@@ -99,8 +97,10 @@ async fn get_todo_by_id(
     let todo = todo.unwrap();
     let json_response = SingleTodoResponse {
         status: "success".to_string(),
-        data: TodoData { todo: todo.clone() }
+        data: TodoData { todo: todo.clone() },
     };
 
     HttpResponse::Found().json(json_response)
 }
+
+
