@@ -23,7 +23,7 @@ pub async fn health_checker_handler() -> impl Responder {
 #[get("/todos")]
 pub async fn todo_list_handler(
     opts: web::Query<QueryOptions>,
-    data: web::Data<AppState>
+    data: web::Data<AppState>,
 ) -> impl Responder {
     let todos = data.todo_db.lock().unwrap();
 
@@ -53,7 +53,7 @@ async fn create_todo_handler(
     if todo.is_some() {
         let error_response = GenericResponse {
             status: "fail".to_string(),
-            message: format!("Todo with title `{}` already exists.", body.title)
+            message: format!("Todo with title `{}` already exists.", body.title),
         };
 
         return HttpResponse::Conflict().json(error_response);
@@ -72,8 +72,35 @@ async fn create_todo_handler(
 
     let json_response = SingleTodoResponse {
         status: "success".to_string(),
-        data: TodoData { todo }
+        data: TodoData { todo },
     };
 
     HttpResponse::Created().json(json_response)
+}
+
+#[get("/todos/{id}")]
+async fn get_todo_by_id(
+    path: web::Path<String>,
+    data: web::Data<AppState>
+) -> impl Responder {
+    let vec = data.todo_db.lock().unwrap();
+
+    let id = path.into_inner();
+    let todo = vec.iter().find(|todo| todo.id == Some(id.to_owned()));
+
+    if todo.is_none() {
+        let error_response = GenericResponse {
+            status: "fail".to_string(),
+            message: format!("Todo with id `{id}` doesn't exists.")
+        };
+        return HttpResponse::NotFound().json(error_response);
+    }
+
+    let todo = todo.unwrap();
+    let json_response = SingleTodoResponse {
+        status: "success".to_string(),
+        data: TodoData { todo: todo.clone() }
+    };
+
+    HttpResponse::Found().json(json_response)
 }
